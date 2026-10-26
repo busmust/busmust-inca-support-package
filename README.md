@@ -20,7 +20,7 @@ Source mirror: [Gitee](https://gitee.com/busmust/busmust-inca-support-package).
 
 ## Install once
 
-1. Extract the complete customer ZIP to a local directory. Fully close INCA and its TgtSvr.
+1. Extract the complete customer ZIP to a local directory. Exit INCA and its hardware service.
 2. Double-click `Install.cmd` and accept the Windows administrator prompt.
    No connected hardware is required for installation.
 3. Start INCA using its original shortcut. Add a J2534 system and select
@@ -43,18 +43,15 @@ INCA executable, ETAS DLL, ETAS global setting or system PATH is changed.
 
 ## New devices, multiple devices and channel changes
 
-Installation registers one generic provider in each registry architecture view.
-It does not register a DLL per device or channel. After connecting a new device,
+After connecting a new device,
 open the configuration dialog, select its port, save and reinitialise
 INCA. Reinstallation is unnecessary for models supported by the installed BMAPI
 and USB driver. A later new hardware model can require a driver/BMAPI update.
-The channel list follows BMAPI's complete names and ordering without splitting
-devices and ports into linked lists. It refreshes on Windows device notifications;
-use **Refresh** if needed. Software and selected-channel firmware versions share
-one row. A missing saved channel is marked unavailable and cannot be saved; it
+Select a channel by its complete model, serial number and physical port name.
+The list refreshes on Windows device notifications and preserves the selected
+channel; use **Refresh** if needed. A missing saved channel is marked unavailable and cannot be saved; it
 is never silently replaced. Selecting a valid channel clears that state.
-The dialog uses BMAPI names
-and stable UID/port identities, not USB enumeration order. LIN, remote and virtual
+LIN, remote and virtual
 channels are excluded. The interface follows INCA's saved Chinese or English
 language preference; other languages use English.
 
@@ -68,9 +65,8 @@ Off/120-ohm choice. An active connection never hot-switches to a replacement.
 
 **Manual** saves one exact UID/port and fails if it is absent, even if another
 unique device is available. Only Save of a different Manual choice or a return to
-Auto changes that binding. Old exact-UID settings are read as Manual; corrupt
-settings fail rather than silently enabling Auto. An explicit client selector
-overrides the user's default mode. Stop/reinitialise hardware before switching.
+Auto changes that binding. Corrupt or unreadable settings return an error.
+Release the hardware before changing settings, then reinitialise it as described below.
 Different Windows users configure their own selection.
 
 Configure the port before initialising hardware. When already connected, release
@@ -101,10 +97,9 @@ separately below; an unlisted combination is not claimed as tested.
 | 7.4.3 | Windows 10 |
 | 7.4.3 | Windows 11 |
 
-This package does not claim native ES582 compatibility or simultaneous physical
-ports in one INCA experiment. A standard client can select an exact UID/port
-explicitly; its own concurrency limits still apply. Validation results must refer
-to the exact candidate's evidence, not merely to this README.
+This package connects to INCA through J2534 and does not provide a native ES582
+interface. Use one physical port per INCA experiment. A standard J2534 client can
+select an exact UID/port explicitly; its concurrency limits depend on that client.
 
 ## Features and boundaries
 
@@ -112,8 +107,8 @@ to the exact candidate's evidence, not merely to this README.
 * INCA XCP and UDS use the application's corresponding features and licences.
   UDS in ODX-LINK requires the appropriate ETAS licence and a consistent project.
 * CAN FD extensions include SAE `FD_CAN_PS` / `FD_ISO15765_PS` and GM
-  `CAN_FD_PS` / `ISO15765_FD_PS`. GM refers to General Motors' extension namespace;
-  it is not a new BUSMUST company or product. This package does not include SAE
+  `CAN_FD_PS` / `ISO15765_FD_PS`. GM refers to General Motors' extension namespace.
+  This package does not include SAE
   or GM standards publications or claim their certification.
 * Raw CAN FD uses legal payload sizes up to 64 bytes. ISO-TP handles segmented
   requests and responses within the declared J2534 message-buffer limit.
@@ -126,15 +121,14 @@ to the exact candidate's evidence, not merely to this README.
 * Saved custom values bind to that exact Manual channel and are read at the next
   hardware Open, without changing an active connection. CAN starts with this
   value and still accepts later INCA / standard `BIT_SAMPLE_POINT` changes.
-  CAN FD uses both Config values. Existing FD-only custom records retain their
-  scope until explicitly saved again in Config.
+  CAN FD uses both Config values.
 * Hardware rejection or readback outside tolerance returns an error and restores
   the previous settings; failed recovery requires Close/Open. INCA 7.4.3's original
   FD sample-point display is not synchronised with Config and does not confirm
   applied hardware values. For troubleshooting, `CONFIG_APPLIED` contains requested
   and actual values; `CONFIG_REJECTED` records failures. Routine configuration
-  does not require reading logs. FD `BIT_SAMPLE_POINT` remains unsupported;
-  no private parameter is presented as a standard one.
+  does not require reading logs. Set CAN FD sampling points through Config;
+  the standard `BIT_SAMPLE_POINT` parameter is unsupported for CAN FD.
 * Raw CAN/CAN FD periodic and ordinary writes share arrival order. Each periodic message has at
   most one pending job. Overload skips missed cycles instead of accumulating or
   catching up an unbounded backlog, so the actual interval can increase.
@@ -160,7 +154,7 @@ If INCA cannot open the port, close other applications holding it, reconnect the
 intended device, refresh the dialog and confirm its model/SN, channel and bus parameters.
 Saving a selection does not initialise an already open INCA connection. A licence
 warning is an INCA feature issue; it does not grant or remove a BM device licence.
-Inspect INCA's monitor log after a test and retain new warnings/errors.
+Retain INCA's monitor log when a warning or error occurs to help with diagnosis.
 
 Advanced administrators may use Windows PowerShell 5.1 or PowerShell 7:
 
@@ -184,20 +178,15 @@ Records identify the runtime/BMAPI hashes, UID/port, model/SN/firmware, applied
 configuration, connection/close results, errors and low-frequency counters.
 They do not dump message payloads, but can include user paths and device IDs.
 
-A background writer uses a 128-record queue and 128-record/second budget.
 Files rotate at 4 MiB with two backups; the latest eight sessions are normally
-retained without deleting active files. Overflow is summarized. At most two
-writers may be active/retiring; rapid reopen attempts may have only a skipped
-count. These bounded diagnostics are not a complete capture: process failure,
-I/O failure, rotation and throttling can lose records. Normal close requests an
-asynchronous drain without waiting for disk. An unwritable directory does not
-change communication results or redirect logs into the INCA installation.
+retained. Logs have capacity and rate limits and are not a complete message
+capture. Process failure, I/O failure or throttling can lose records.
+An unwritable log directory does not affect communication results.
 
 Support may disable logging with DWORD `FileLogEnabled=0` in the 64-bit view of
 `HKCU\Software\BUSMUST\J2534`; delete it or set it to 1 to restore the default.
-Changes apply on the next device open. This changes only our own configuration.
-Stopping INCA measurement is not necessarily a hardware Disconnect/Close;
-closing our configuration dialog does not close an active channel.
+Changes apply on the next device open. Stopping measurement or closing Config
+does not release an active channel; follow the reconfiguration steps above.
 
 ## Source, licences and verification
 
@@ -207,13 +196,8 @@ The supplied `BMAPI.dll` retains its own SDK licence under `licenses/BMAPI/`.
 ETAS software, licences and third-party standards are
 not redistributed. No ETAS binary modification is required.
 
-Developers: `Build-Native.ps1` consumes external BMAPI headers. The independent
-human-maintained authority is `native/J2534/BMJ2534.Version.props`; no build or
-dependency automatically increments it. PE and J2534 DLL versions use that value;
-actual firmware, API `04.04` and BMAPI Runtime are reported separately.
+Developers: `Build-Native.ps1` consumes external BMAPI headers. Set the BMJ2534
+product version in `native/J2534/BMJ2534.Version.props`.
 See [public regression](tests/README.md) for the independently buildable mock tests.
-`Build-SupportPackage.ps1` assembles a candidate
-from matching runtime and legal inputs and writes `payload.json` SHA-256 hashes.
-Product version selection, signing and release publication remain release-owner
-steps. `Export-PublicSource.ps1` exports only the explicit public-source allowlist;
-it excludes internal workflow records, evidence, binaries and account data.
+`Build-SupportPackage.ps1` assembles an installation package from matching
+runtime and licence inputs and writes `payload.json` SHA-256 hashes.
