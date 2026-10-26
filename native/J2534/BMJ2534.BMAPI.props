@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Consume external SDK inputs; do not copy or relicense BMAPI source. -->
+  <Import Project="BMJ2534.Version.props" />
+  <Target Name="ReadProductVersion" BeforeTargets="ClCompile;ResourceCompile">
+    <Error Condition="!Exists('$(BMAPIIncludeDirectory)\bmapi.h') Or !Exists('$(BMAPIIncludeDirectory)\bm_usb_def.h')" Text="Set BMAPIIncludeDirectory to the matching Windows BMAPI SDK include directory." />
+    <Error Condition="'$(BMJ2534Packing)'!='Standard'" Text="Only standard one-byte J2534 packing is supported." />
+    <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(BMJProductVersion)', '^\d+\.\d+\.\d+\.\d+$'))" Text="The human-maintained BMJ2534 product version must contain four numeric components." />
+    <ItemGroup>
+      <VersionLine Include="#define BMJ_FILEVERSION $(BMJProductVersion.Replace('.', ','))" />
+      <VersionLine Include="#define BMJ_FILEVERSION_STRING &quot;$(BMJProductVersion)&quot;" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(IntDir)bmj2534_version.h" Lines="@(VersionLine)" Overwrite="true" />
+  </Target>
+</Project>

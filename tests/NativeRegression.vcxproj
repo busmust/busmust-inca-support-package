@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals"><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType Condition="'$(BuildMock)'=='true'">DynamicLibrary</ConfigurationType>
+    <ConfigurationType Condition="'$(BuildMock)'!='true'">Application</ConfigurationType>
+    <PlatformToolset>v140_xp</PlatformToolset><UseDebugLibraries>false</UseDebugLibraries><CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <TargetName Condition="'$(BuildMock)'=='true'">BMAPI</TargetName>
+    <TargetName Condition="'$(BuildMock)'!='true'">NativeRegression</TargetName>
+    <BMJ2534Packing>Standard</BMJ2534Packing>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile><WarningLevel>Level4</WarningLevel><Optimization>MaxSpeed</Optimization><RuntimeLibrary>MultiThreaded</RuntimeLibrary><ExceptionHandling>Sync</ExceptionHandling>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);$(ProjectDir)..\native\J2534;$(BMAPIIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link><AdditionalDependencies>advapi32.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies><SubSystem>Console</SubSystem></Link>
+  </ItemDefinitionGroup>
+  <ItemGroup Condition="'$(BuildMock)'=='true'"><ClCompile Include="mock_bmapi.cpp" /></ItemGroup>
+  <ItemGroup Condition="'$(BuildMock)'!='true'">
+    <ClCompile Include="native_regression.cpp" /><ClCompile Include="..\native\J2534\bmj2534_backend.cpp" />
+  </ItemGroup>
+  <Import Project="..\native\J2534\BMJ2534.BMAPI.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

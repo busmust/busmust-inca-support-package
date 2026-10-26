@@ -1,0 +1,138 @@
+#pragma code_page(65001)
+#include <windows.h>
+#include "bmj2534_version.h"
+101 ICON "BMJ2534Config.ico"
+1 RT_MANIFEST "BMJ2534Config.manifest"
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+100 DIALOGEX 0,0,350,170
+STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "BUSMUST J2534 Device Configuration"
+FONT 9,"Segoe UI"
+BEGIN
+    LTEXT "Mode",205,12,10,40,14,SS_CENTERIMAGE
+    COMBOBOX 1007,60,10,146,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT "Firmware",204,224,54,44,14,SS_CENTERIMAGE
+    LTEXT "",1006,268,54,70,14,SS_CENTERIMAGE
+    LTEXT "Channel",200,12,32,40,14,SS_CENTERIMAGE
+    COMBOBOX 1000,60,32,278,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT "Versions",206,12,54,40,14,SS_CENTERIMAGE
+    LTEXT "",1008,60,54,160,14,SS_CENTERIMAGE
+    LTEXT "Termination",201,224,10,44,14,SS_CENTERIMAGE
+    COMBOBOX 1003,268,10,70,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | WS_DISABLED
+    LTEXT "Sampling",207,12,76,48,14,SS_CENTERIMAGE
+    COMBOBOX 1009,60,76,278,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | WS_DISABLED
+    LTEXT "CAN / arbitration (%)",208,12,98,90,14,SS_CENTERIMAGE
+    EDITTEXT 1010,104,98,42,14,ES_NUMBER | ES_CENTER | WS_TABSTOP | WS_DISABLED
+    LTEXT "Data (CAN FD only, %)",209,166,98,124,14,SS_CENTERIMAGE
+    EDITTEXT 1011,292,98,46,14,ES_NUMBER | ES_CENTER | WS_TABSTOP | WS_DISABLED
+    LTEXT "Disconnect INCA from the hardware before changing settings; otherwise channels may be unavailable. See the included guide.",210,12,120,326,18
+    PUSHBUTTON "Refresh",1001,12,144,52,16
+    LTEXT "",1002,72,144,146,16,SS_CENTERIMAGE
+    DEFPUSHBUTTON "Save",IDOK,226,144,52,16,WS_DISABLED
+    PUSHBUTTON "Cancel",IDCANCEL,286,144,52,16
+END
+STRINGTABLE
+BEGIN
+    310 "Cannot load BMAPI."
+    311 "Scan failed. Refresh."
+    312 "No CAN device found."
+    313 "Reconnect to apply."
+    314 "Selected channel unavailable. Check connection or use."
+    315 "Saved choice restored."
+    316 "Cannot save selection."
+    317 "Off"
+    318 "120 Ω"
+    320 "Invalid termination setting."
+    321 "Invalid device selection."
+    322 "Select a device"
+    325 "Select the channel to use."
+    326 "Select a channel."
+    327 "Auto: no available CAN channel."
+    328 "Auto: select Manual for >1."
+    329 "Auto: one CAN channel."
+    330 "Auto (one physical CAN channel)"
+    331 "Manual"
+    332 "Default (75% / 80%)"
+    333 "Custom for selected channel"
+    334 "Sampling points must be 1..100%."
+    335 "Selected channel unavailable"
+END
+LANGUAGE LANG_CHINESE,SUBLANG_CHINESE_SIMPLIFIED
+100 DIALOGEX 0,0,350,170
+STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "BUSMUST J2534 设备配置"
+FONT 9,"Microsoft YaHei UI"
+BEGIN
+    LTEXT "模式",205,12,10,40,14,SS_CENTERIMAGE
+    COMBOBOX 1007,60,10,146,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT "固件版本",204,224,54,44,14,SS_CENTERIMAGE
+    LTEXT "",1006,268,54,70,14,SS_CENTERIMAGE
+    LTEXT "通道",200,12,32,40,14,SS_CENTERIMAGE
+    COMBOBOX 1000,60,32,278,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT "软件版本",206,12,54,40,14,SS_CENTERIMAGE
+    LTEXT "",1008,60,54,160,14,SS_CENTERIMAGE
+    LTEXT "终端电阻",201,224,10,44,14,SS_CENTERIMAGE
+    COMBOBOX 1003,268,10,70,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | WS_DISABLED
+    LTEXT "采样点",207,12,76,48,14,SS_CENTERIMAGE
+    COMBOBOX 1009,60,76,278,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | WS_DISABLED
+    LTEXT "CAN / 仲裁段 (%)",208,12,98,90,14,SS_CENTERIMAGE
+    EDITTEXT 1010,104,98,42,14,ES_NUMBER | ES_CENTER | WS_TABSTOP | WS_DISABLED
+    LTEXT "数据段（仅 CAN FD，%）",209,166,98,124,14,SS_CENTERIMAGE
+    EDITTEXT 1011,292,98,46,14,ES_NUMBER | ES_CENTER | WS_TABSTOP | WS_DISABLED
+    LTEXT "更改配置前，请先断开 INCA 的硬件连接，否则可能找不到通道。操作步骤见随包指南。",210,12,120,326,18
+    PUSHBUTTON "刷新",1001,12,144,52,16
+    LTEXT "",1002,72,144,146,16,SS_CENTERIMAGE
+    DEFPUSHBUTTON "保存",IDOK,226,144,52,16,WS_DISABLED
+    PUSHBUTTON "取消",IDCANCEL,286,144,52,16
+END
+STRINGTABLE
+BEGIN
+    310 "无法加载 BMAPI。"
+    311 "扫描失败，请刷新。"
+    312 "未发现 CAN 设备。"
+    313 "重新连接后生效。"
+    314 "原通道不可用，请检查连接或占用。"
+    315 "已恢复保存的选择。"
+    316 "无法保存当前选择。"
+    317 "关闭"
+    318 "120 Ω"
+    320 "终端电阻配置无效。"
+    321 "设备选择无效。"
+    322 "请选择设备"
+    325 "请选择要使用的通道。"
+    326 "请选择通道。"
+    327 "自动：尚无可用 CAN 通道。"
+    328 "自动：多通道时请选择手动。"
+    329 "自动：一个可用 CAN 通道。"
+    330 "自动（唯一物理 CAN 通道）"
+    331 "手动"
+    332 "默认（75% / 80%）"
+    333 "自定义（仅所选通道）"
+    334 "采样点须为 1..100%。"
+    335 "已选通道不可用（未连接或被占用）"
+END
+1 VERSIONINFO
+FILEVERSION BMJ_FILEVERSION
+PRODUCTVERSION BMJ_FILEVERSION
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0x0L
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE 0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName","BUSMUST"
+            VALUE "FileDescription","BUSMUST J2534 Device Configuration"
+            VALUE "FileVersion",BMJ_FILEVERSION_STRING
+            VALUE "ProductName","BUSMUST J2534"
+            VALUE "ProductVersion",BMJ_FILEVERSION_STRING
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation",0x409,1200
+    END
+END

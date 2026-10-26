@@ -1,0 +1,15 @@
+BUSMUST INCA J2534 Support Package
+Copyright 2026 BUSMUST Tech Co.,Ltd.
+
+BUSMUST-authored source, scripts and documentation are licensed under Apache-2.0.
+This product includes interface definitions from Mackanized/op2j2534 and modified
+ISO-TP code from SimonCahill/isotp-c. Their original copyright notices and licences
+are retained under native/J2534/third_party/ in source distributions and licenses/
+in customer distributions. See THIRD_PARTY.md for pinned origins and modifications.
+
+BMAPI, its SDK, ETAS software and standards publications are not relicensed
+by this notice. ETAS and other product names identify interoperability targets;
+their owners do not thereby endorse or certify this package.
+
+The BUSMUST company icon is reused from the BUSMUST desktop application.
+The Apache-2.0 code licence does not grant rights to BUSMUST trademarks or logos.

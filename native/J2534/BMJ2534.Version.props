@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Human-maintained product authority. Set explicitly by the product owner;
+       never inherit the BMAPI dependency or increment from a build/commit. -->
+  <PropertyGroup>
+    <BMJProductVersion>1.0.0.1</BMJProductVersion>
+  </PropertyGroup>
+</Project>
