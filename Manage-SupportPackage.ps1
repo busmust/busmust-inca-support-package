@@ -12,6 +12,39 @@ $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 Import-Module (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Utility/Microsoft.PowerShell.Utility.psd1') -ErrorAction Stop
 Import-Module (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Management/Microsoft.PowerShell.Management.psd1') -ErrorAction Stop
+function Registered-InstallRoot {
+    $roots=New-Object 'Collections.Generic.List[string]'
+    foreach($arch in @('x64','x86')) {
+        $view=if($arch -eq 'x64'){[Microsoft.Win32.RegistryView]::Registry64}else{[Microsoft.Win32.RegistryView]::Registry32}
+        $base=[Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine,$view)
+        try {
+            $key=$base.OpenSubKey('SOFTWARE\PassThruSupport.04.04\BUSMUST - BMJ2534',$false)
+            if(-not $key){continue}
+            try {
+                $library=[string]$key.GetValue('FunctionLibrary')
+                $suffix='\runtime\'+$arch+'\BMJ2534Endpoint.dll'
+                if(-not $library){
+                    $library=[string]$key.GetValue('ConfigApplication')
+                    $suffix='\runtime\'+$arch+'\BMJ2534Config.exe'
+                }
+                # Registration can stop between individual value writes. A
+                # complete sibling entry or the default pending installation
+                # supplies the root; Build-Plan validates the partial owner.
+                if(-not $library){continue}
+                if($key.GetValue('Vendor') -notin @($null,'BUSMUST') -or -not [IO.Path]::IsPathRooted($library) -or
+                   -not $library.EndsWith($suffix,[StringComparison]::OrdinalIgnoreCase)) {
+                    throw "Existing $arch BUSMUST provider has an unrecognized installation path: $library"
+                }
+                $root=[IO.Path]::GetFullPath($library.Substring(0,$library.Length-$suffix.Length)).TrimEnd('\','/')
+                if($roots.Count -and $roots[0] -ne $root) {
+                    throw "BUSMUST x86/x64 providers belong to different directories: $($roots[0]); $root. Repair or uninstall those installations before installing again."
+                }
+                $roots.Add($root)
+            } finally {$key.Dispose()}
+        } finally {$base.Dispose()}
+    }
+    if($roots.Count){return $roots[0]}
+}
 if(-not $InstallRoot) {
     # Installed entry points operate on their own instance. A malformed local
     # ownership record must fail validation, never fall back to another root.
@@ -19,8 +52,13 @@ if(-not $InstallRoot) {
        (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'pending-install.json'))) {
         $InstallRoot=$PSScriptRoot
     } else {
-        $programFiles=if($env:ProgramW6432){$env:ProgramW6432}else{$env:ProgramFiles}
-        $InstallRoot=Join-Path $programFiles 'BUSMUST/INCA-J2534'
+        # Reuse the active instance; Build-Plan still validates its state and
+        # both provider ownership records before any installation mutation.
+        $InstallRoot=Registered-InstallRoot
+        if(-not $InstallRoot) {
+            $programFiles=if($env:ProgramW6432){$env:ProgramW6432}else{$env:ProgramFiles}
+            $InstallRoot=Join-Path $programFiles 'BUSMUST/INCA-J2534'
+        }
     }
 }
 $install=[IO.Path]::GetFullPath($InstallRoot).TrimEnd('\','/')
@@ -97,7 +135,7 @@ function Native-Registration([string]$Operation,[string]$Architecture,[guid]$Ins
     $folder=if($Architecture -eq 'x64'){'x64'}else{'x86'}
     & (Join-Path $PSScriptRoot 'scripts/Register-BMJ2534.ps1') -Action $Operation -Architecture $Architecture -RuntimeDirectory (Join-Path $install ('runtime/'+$folder)) -InstallationId $InstallationId
 }
-function Remove-LegacyRegistrations($State) {
+function Remove-LegacyRegistrations($State,[switch]$CheckOnly) {
     if(-not $State -or -not $State.PSObject.Properties['Bindings']) {return}
     foreach($binding in @($State.Bindings)) {
         if($binding.Uid -notmatch '^[0-9A-Fa-f]{24}$' -or $binding.Port -lt 0 -or $binding.Port -gt 65535) {throw 'Invalid legacy ownership binding.'}
@@ -117,7 +155,7 @@ function Remove-LegacyRegistrations($State) {
                         throw 'Preserve a legacy provider whose ownership or path changed.'
                     }
                 } finally {$key.Dispose()}
-                $base.DeleteSubKeyTree($keyPath,$false)
+                if(-not $CheckOnly){$base.DeleteSubKeyTree($keyPath,$false)}
             } finally {$base.Dispose()}
         }
     }
@@ -147,8 +185,13 @@ function Shortcut-Plan($State) {
 function Build-Plan {
     Assert-NoReparse $install
     $state=Read-State
+    if($state){Remove-LegacyRegistrations $state -CheckOnly}
     if($Action -eq 'Uninstall' -and -not $state) { throw 'The support package is not installed.' }
-    if($Action -eq 'Uninstall') { return [pscustomobject]@{State=$state;ChangesRequired=$true} }
+    if($Action -eq 'Uninstall') {
+        # Check every provider before removing any registry entry or file.
+        foreach($arch in @('x64','x86')) { Native-Registration 'Check' $arch ([guid]$state.InstallationId) | Out-Null }
+        return [pscustomobject]@{State=$state;ChangesRequired=$true}
+    }
     $payloadPath=Join-Path $PSScriptRoot 'payload.json'
     $payload=Read-Json $payloadPath
     if($payload.Schema -ne 1 -or $payload.Owner -ne $owner) { throw 'Invalid support-package payload manifest.' }

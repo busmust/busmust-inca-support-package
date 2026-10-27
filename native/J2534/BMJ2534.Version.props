@@ -3,6 +3,6 @@
   <!-- Human-maintained product authority. Set explicitly by the product owner;
        never inherit the BMAPI dependency or increment from a build/commit. -->
   <PropertyGroup>
-    <BMJProductVersion>1.0.2.1</BMJProductVersion>
+    <BMJProductVersion>1.0.3.1</BMJProductVersion>
   </PropertyGroup>
 </Project>

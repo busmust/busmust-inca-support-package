@@ -45,7 +45,7 @@ try {
                $existing.GetValue('Vendor') -notin @($null,'BUSMUST') -or
                $existing.GetValue('FunctionLibrary') -notin @($null,$library) -or
                $existing.GetValue('ConfigApplication') -notin @($null,$config)) {
-                throw 'Preserve a provider belonging to another or modified installation.'
+                throw "Existing $Architecture BUSMUST provider ownership or paths do not match this installation. Registered library: $($existing.GetValue('FunctionLibrary')); requested library: $library. Repair or uninstall the registered installation before installing again."
             }
         } finally {$existing.Dispose()}
     }

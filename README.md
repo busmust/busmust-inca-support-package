@@ -37,7 +37,8 @@ You can also open the configuration dialog from the Windows Start menu under
 terminated. Mode and termination are saved per Windows user; Manual also saves
 the exact UID/physical port.
 
-The installation is stored in `%ProgramW6432%\BUSMUST\INCA-J2534`. Keep the PDF
+Fresh installations use `%ProgramW6432%\BUSMUST\INCA-J2534`. New packages automatically
+update an existing registered BUSMUST installation in its current directory. Keep the PDF
 guide and READMEs from the extracted package if you need them for later reference;
 they are not copied to the installation directory. Document encryption or locks
 do not affect installation. The downloaded ZIP and other extracted files can be
@@ -169,9 +170,9 @@ Advanced administrators may use Windows PowerShell 5.1 or PowerShell 7:
 ```
 
 Use a dedicated directory. Reparse targets, parent traversal and foreign
-installation ownership are rejected. Administrators should use the same root
-for updates. Installing into another root does not take ownership of an existing
-provider from the first root.
+installation ownership are rejected. Without `-InstallRoot`, setup discovers the
+active installation and validates its ownership before updating it. An explicit
+different root does not take ownership of an existing provider from the first root.
 
 ## Field diagnostics
 
