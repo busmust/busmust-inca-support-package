@@ -63,6 +63,10 @@ function Write-JsonAtomic([string]$Path,$Value) {
     }
 }
 function File-Hash([string]$Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash }
+function Test-DllPayload([string]$Relative) { [IO.Path]::GetExtension($Relative) -ieq '.dll' }
+function Test-InstallPayload([string]$Relative) {
+    $Relative -eq 'payload.json' -or $Relative -like 'runtime/*' -or $Relative -in @('Manage-SupportPackage.ps1','Install.cmd','Uninstall.cmd','scripts/Register-BMJ2534.ps1')
+}
 function Assert-Unlocked([string]$Path) {
     $handle=[IO.File]::Open($Path,[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
     $handle.Dispose()
@@ -150,13 +154,19 @@ function Build-Plan {
     if($payload.Schema -ne 1 -or $payload.Owner -ne $owner) { throw 'Invalid support-package payload manifest.' }
     $files=New-Object 'Collections.Generic.Dictionary[string,object]' ([StringComparer]::OrdinalIgnoreCase)
     foreach($file in @($payload.Files)) {
-        if($file.Sha256 -notmatch '^[0-9a-fA-F]{64}$' -or $files.ContainsKey($file.Path)) { throw 'Invalid/duplicate payload hash entry.' }
+        if(-not (Test-InstallPayload $file.Path)){continue}
+        if($files.ContainsKey($file.Path)) { throw 'Duplicate installation payload entry.' }
         $source=Child-Path $PSScriptRoot $file.Path
-        if(-not (Test-Path -LiteralPath $source -PathType Leaf) -or (File-Hash $source) -ne $file.Sha256) { throw "Package file does not match its hash: $($file.Path)" }
-        $files.Add($file.Path,[pscustomobject]@{Path=$file.Path;Sha256=$file.Sha256;Source=$source})
+        if(-not (Test-Path -LiteralPath $source -PathType Leaf)){throw "Missing installation file: $($file.Path)"}
+        $sourceHash=File-Hash $source
+        if((Test-DllPayload $file.Path) -and
+           (-not $file.PSObject.Properties['Sha256'] -or $file.Sha256 -notmatch '^[0-9a-fA-F]{64}$' -or $sourceHash -ne $file.Sha256)) {
+            throw "Package DLL does not match its hash: $($file.Path)"
+        }
+        # Non-DLL hashes record ownership/update state, not package integrity admission.
+        $files.Add($file.Path,[pscustomobject]@{Path=$file.Path;Sha256=$sourceHash;Source=$source})
     }
-    $requiredFiles=@('Manage-SupportPackage.ps1','Install.cmd','Uninstall.cmd','scripts/Register-BMJ2534.ps1','README.md','README.zh-CN.md','LICENSE','NOTICE','THIRD_PARTY.md','licenses/BMAPI/LICENSE')
-    $requiredFiles+='先看这里_BUSMUST设备接入INCA指南.pdf'
+    $requiredFiles=@('Manage-SupportPackage.ps1','Install.cmd','Uninstall.cmd','scripts/Register-BMJ2534.ps1')
     foreach($folder in @('x64','x86')) {
         $core=if($folder -eq 'x64'){'BMJ2534.dll'}else{'BMJ25332.dll'}
         foreach($name in @($core,'BMJ2534Endpoint.dll','BMJ2534Config.exe','BMAPI.dll')){$requiredFiles+='runtime/'+$folder+'/'+$name}
@@ -272,6 +282,7 @@ try {
         foreach($file in @($plan.State.Files)) {
             $path=Child-Path $install $file.Path
             if(-not (Test-Path -LiteralPath $path)){continue}
+            if(-not (Test-InstallPayload $file.Path)){$preserved.Add($path);continue}
             if(-not (Test-OwnedFileHash $plan.State $file.Path (File-Hash $path))) { $preserved.Add($path);continue }
             Assert-Unlocked $path;$removeFiles.Add($path)
         }
@@ -279,7 +290,10 @@ try {
         if($plan.State.PSObject.Properties['StagingPath'] -and $plan.State.StagingPath) {
             $stagedFile=(Child-Path $install $plan.State.StagingPath)+'.installing'
             Assert-NoReparse $stagedFile
-            if(Test-Path -LiteralPath $stagedFile) {
+            if((Test-Path -LiteralPath $stagedFile) -and -not (Test-InstallPayload $plan.State.StagingPath)) {
+                $preserved.Add($stagedFile);$stagedFile=$null
+            }
+            if($stagedFile -and (Test-Path -LiteralPath $stagedFile)) {
                 if(-not (Test-OwnedFileHash $plan.State $plan.State.StagingPath (File-Hash $stagedFile))){throw "Preserve modified staging file: $stagedFile"}
                 Assert-Unlocked $stagedFile
             }
@@ -329,17 +343,18 @@ try {
         }
         $state.StagingPath=$file.Path;Write-JsonAtomic $pendingPath $state
         if(-not (Test-Path -LiteralPath $temporary)){Copy-Item -LiteralPath $file.Source -Destination $temporary}
-        if((File-Hash $temporary) -ne $file.Sha256){throw 'Staged file hash differs.'}
+        if((Test-DllPayload $file.Path) -and (File-Hash $temporary) -ne $file.Sha256){throw 'Staged DLL hash differs.'}
         if(Test-Path -LiteralPath $destination){[IO.File]::Replace($temporary,$destination,[NullString]::Value)}else{[IO.File]::Move($temporary,$destination)}
     }
     foreach($entry in $plan.Registrations) { Native-Registration 'Install' $entry.Architecture $plan.InstallationId | Out-Null }
     foreach($arch in @('x64','x86')) { if((Native-Registration 'Check' $arch $plan.InstallationId).ChangesRequired){throw 'Installed registration readback failed.'} }
-    foreach($file in $plan.Files) { if((File-Hash (Child-Path $install $file.Path)) -ne $file.Sha256){throw 'Installed file readback failed.'} }
+    foreach($file in $plan.Files) { if((Test-DllPayload $file.Path) -and (File-Hash (Child-Path $install $file.Path)) -ne $file.Sha256){throw 'Installed DLL readback failed.'} }
     Remove-LegacyRegistrations $state
     $obsoletePreserved=@()
     foreach($file in @($state.Files|Where-Object {$_.Path -notin @($plan.Files.Path)})) {
         $path=Child-Path $install $file.Path
         if(-not (Test-Path -LiteralPath $path)){continue}
+        if(-not (Test-InstallPayload $file.Path)){$obsoletePreserved+=$file;continue}
         if((File-Hash $path) -eq $file.Sha256){Assert-Unlocked $path;Remove-Item -LiteralPath $path -Force}
         else {$obsoletePreserved+=$file}
     }

@@ -74,7 +74,12 @@ foreach($relative in $legalFiles) {
     Copy-Payload $source $relative
 }
 $files=@(Get-ChildItem -LiteralPath $output -Recurse -File | Sort-Object FullName | ForEach-Object {
-    [pscustomobject]@{Path=$_.FullName.Substring($output.Length+1).Replace('\','/');Sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
+    $relative=$_.FullName.Substring($output.Length+1).Replace('\','/')
+    if($relative -like 'runtime/*' -or $relative -in @('Manage-SupportPackage.ps1','Install.cmd','Uninstall.cmd','scripts/Register-BMJ2534.ps1')) {
+        if([IO.Path]::GetExtension($relative) -ieq '.dll') {
+            [pscustomobject]@{Path=$relative;Sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
+        } else {[pscustomobject]@{Path=$relative;Sha256=$null}}
+    }
 })
 [pscustomobject]@{Schema=1;Owner='BUSMUST.INCA.J2534';Files=$files} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'payload.json') -Encoding utf8
 if($CreateZip) {

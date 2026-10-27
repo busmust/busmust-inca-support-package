@@ -37,9 +37,12 @@ You can also open the configuration dialog from the Windows Start menu under
 terminated. Mode and termination are saved per Windows user; Manual also saves
 the exact UID/physical port.
 
-The installation is stored in `%ProgramW6432%\BUSMUST\INCA-J2534`. The downloaded
-ZIP and extracted directory can be deleted after a successful installation. No
-INCA executable, ETAS DLL, ETAS global setting or system PATH is changed.
+The installation is stored in `%ProgramW6432%\BUSMUST\INCA-J2534`. Keep the PDF
+guide and READMEs from the extracted package if you need them for later reference;
+they are not copied to the installation directory. Document encryption or locks
+do not affect installation. The downloaded ZIP and other extracted files can be
+deleted after a successful installation. No INCA executable, ETAS DLL, ETAS global
+setting or system PATH is changed.
 
 ## New devices, multiple devices and channel changes
 
@@ -142,9 +145,10 @@ select an exact UID/port explicitly; its concurrency limits depend on that clien
 
 Close INCA and any J2534 clients. Use **Uninstall BUSMUST J2534** in the Start menu
 or the installed `Uninstall.cmd`. Only this installation's provider registrations,
-known shortcuts and unchanged owned files are removed. Modified/extra files are
-preserved and reported. Keep that report if removal is incomplete. An update
-refuses to overwrite modified or unowned files; preserve them before resolving
+known shortcuts and unchanged owned runtime and setup files are removed. Existing
+documents and modified/extra files are preserved and reported. Keep that report
+if removal is incomplete. An update refuses to overwrite modified or unowned
+files; preserve them before resolving
 that conflict. An interrupted installation can be retried with the same package.
 Double-click the uninstall wrapper as a standalone console; after confirmation it
 closes that command process. For automation or an existing command session, use
@@ -200,4 +204,5 @@ Developers: `Build-Native.ps1` consumes external BMAPI headers. Set the BMJ2534
 product version in `native/J2534/BMJ2534.Version.props`.
 See [public regression](tests/README.md) for the independently buildable mock tests.
 `Build-SupportPackage.ps1` assembles an installation package from matching
-runtime and licence inputs and writes `payload.json` SHA-256 hashes.
+runtime and licence inputs. Its `payload.json` records SHA-256 hashes for DLL
+integrity checks; accompanying documents are excluded from the installation manifest.
